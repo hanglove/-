@@ -1,9 +1,11 @@
 package havenunit
 
 import (
+	"crypto/tls"
 	"fmt"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
+	"gopkg.in/gomail.v2"
 	"log"
 	"strconv"
 	"strings"
@@ -186,4 +188,47 @@ func (p *Pool) Done() {
 
 func (p *Pool) Wait() {
 	p.wg.Wait()
+}
+
+//发送邮件
+func SendMail(host, fromUser, pass string, toUser []string, subject string, cc []string, filenameList []string, body string) error {
+	// NewEmail返回一个email结构体的指针
+	m := gomail.NewMessage()
+	// 发件人
+	m.SetHeader("From", "notice@iadbrain.com")
+	// 收件人(可以有多个)
+	m.SetHeader("To", toUser...)
+	// 抄送人(可以有多个)
+	m.SetHeader("Cc", cc...)
+	// 邮件主题
+	m.SetHeader("Subject", subject)
+	//e.Subject = subject
+	// html形式的消息
+	m.SetBody("text/html", body)
+	// 以路径将文件作为附件添加到邮件中
+	for _, filename := range filenameList {
+		var name string
+		if strings.Contains(filename, "xlsx") {
+			name = strings.ReplaceAll(filename, "./OutputFile/", "")
+		} else if strings.Contains(filename, "zip") {
+			name = "DataReport.zip"
+		}
+		//m.Attach("./OutputFile/【AsiaInnovations-Uplive】-报告.xlsx")
+		//name := strings.ReplaceAll(filename,"./OutputFile/","")
+		//name = strings.ReplaceAll(filename,"OutputFile/","")
+		//h := map[string][]string{"Content-Transfer-Encoding": {"quoted-printable"}}
+		m.Attach(filename, gomail.Rename(name))
+	}
+	// 发送邮件(如果使用QQ邮箱发送邮件的话，passwd不是邮箱密码而是授权码) 465
+	d := gomail.NewDialer(host, 994, fromUser, pass)
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	d.SSL = true
+	err := d.DialAndSend(m)
+	//buf := new(bytes.Buffer)
+	//_, _ = m.WriteTo(buf)
+	//fmt.Println(buf.String())
+	//Logs.Info(buf.String())
+	//log.Panic("断点")
+
+	return err
 }
