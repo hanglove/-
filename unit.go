@@ -232,3 +232,15 @@ func SendMail(host, fromUser, pass string, toUser []string, subject string, cc [
 
 	return err
 }
+
+//字符串转sql 字符串
+func SqlStrToString(arrStr string, spe string) string {
+	searchterms := strings.Split(arrStr, spe)
+	searchtermSql := ""
+	for _, v := range searchterms {
+		searchtermSql += "'" + v + "',"
+
+	}
+	searchtermSql = strings.Trim(searchtermSql, ",")
+	return searchtermSql
+}
