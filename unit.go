@@ -88,6 +88,85 @@ func WeekByDate(t time.Time) int {
 	return week
 }
 
+//夏令时的判断
+//Alaska Daylight Time
+func Daylight(utc time.Time) (isDaylight bool) {
+	//美国的夏令时从每年三月的第二个星期天凌晨2点开始。把时钟拨快一小时。
+	//UTC 11点
+	//每年11月的第一个周日凌晨2点结束(将时钟拨回一小时)。
+	//UTC 10点
+
+	month := utc.Month()
+	if month >= time.March && month <= time.November {
+		if month == time.March {
+			_, ss := GetWeekDayByNum(utc, 0, 2)
+			if ss.Add(11 * time.Hour).Before(utc) {
+				isDaylight = true
+			}
+		} else if month == time.November {
+			_, ss := GetWeekDayByNum(utc, 0, 1)
+			//fmt.Println("ss,", ss.Add(10*time.Hour))
+			//fmt.Println("utc,", utc)
+			if !ss.Add(10 * time.Hour).Before(utc) {
+				isDaylight = true
+			}
+		} else {
+			isDaylight = true
+		}
+
+	}
+	return
+}
+
+//获取本月的第几个星期几
+func GetWeekDayByNum(utc time.Time, weekday, num int) (Date string, DateTime time.Time) {
+	switch num {
+	case 1, 2, 3, 4, 5:
+	default:
+		num = 1
+
+	}
+	weekdayT := time.Sunday
+	switch weekday {
+	case 0:
+		weekdayT = time.Sunday
+	case 1:
+		weekdayT = time.Monday
+	case 2:
+		weekdayT = time.Tuesday
+	case 3:
+		weekdayT = time.Wednesday
+	case 4:
+		weekdayT = time.Thursday
+	case 5:
+		weekdayT = time.Friday
+	case 6:
+		weekdayT = time.Saturday
+
+	}
+	layout := "2006-01-02"
+	month := utc.Format("2006-01")
+	month_frist, _ := time.Parse(layout, month+"-01")
+	//fmt.Println("month_frist.Weekday()", month_frist.Weekday())
+	//fmt.Println("weekdayT", weekdayT)
+	offset := weekdayT - month_frist.Weekday()
+	//fmt.Println("offset", int(offset))
+	switch {
+	case offset > 0:
+
+		DateTime = month_frist.AddDate(0, 0, int(offset)+7*(num-1))
+		Date = DateTime.Format(layout)
+	case offset == 0:
+		DateTime = month_frist.AddDate(0, 0, int(offset)+7*(num-1))
+		Date = DateTime.Format(layout)
+	case offset < 0:
+		DateTime = month_frist.AddDate(0, 0, int(offset)+7*num)
+		Date = DateTime.Format(layout)
+
+	}
+	return
+}
+
 //parameter timerange= 2020-12-12～2020-12-13
 //return dateStrs []string
 // h获取两个日期间的日期
